@@ -12,6 +12,7 @@ public class EnhancedMeshGenerator : MonoBehaviour
     private List<GameObject> powerups = new List<GameObject>();
     private List<GameObject> fireballs = new List<GameObject>();
     private GameObject player, finishGoal;
+    private GameObject instakill;
 
     private Vector3 playerVelocity = Vector3.zero;
     private bool isGrounded = false;
@@ -31,6 +32,17 @@ public class EnhancedMeshGenerator : MonoBehaviour
     private bool goalAppeared = false;
     private float goalSpawnTime = 20f;
 
+    private GameObject _playerMesh;
+    private Vector3 _playerPosition;
+    private Vector3 _playerSize = new Vector3(1f, 1f, 1f);
+    private Vector3 _velocity;
+
+    private bool _canMove = true;
+
+    // List of instakill objects
+    private List<InstakillHazard> _instakills = new List<InstakillHazard>();
+
+
     void Start()
     {
         currentHP = maxHP;
@@ -39,10 +51,18 @@ public class EnhancedMeshGenerator : MonoBehaviour
         GenerateEnemies();
         GenerateObstacles();
         GeneratePowerups();
+
+
+        // Create instakill hazard(s)
+        _instakills.Add(new InstakillHazard(new Vector3(4f, 0.5f, 0f), new Vector3(2f, 1f, 2f)));
+        _instakills.Add(new InstakillHazard(new Vector3(-3f, 0.5f, 0f), new Vector3(2f, 1f, 2f)));
+
+
     }
 
     void Update()
     {
+
         if (gameEnded) return;
 
         gameTimer += Time.deltaTime;
@@ -70,6 +90,16 @@ public class EnhancedMeshGenerator : MonoBehaviour
 
         MoveFinishGoal();
 
+        // Check instakill collisions
+        foreach (var hazard in _instakills)
+        {
+            if (hazard.CheckCollision(_playerPosition, _playerSize))
+            {
+                KillPlayer();
+                break;
+            }
+        }
+
 
         if (currentHP <= 0 && !gameEnded)
         {
@@ -77,11 +107,44 @@ public class EnhancedMeshGenerator : MonoBehaviour
         }
     }
 
+    void KillPlayer()
+    {
+        Debug.Log("You touched a hazard and died.");
+        _canMove = false;
+        _playerMesh.SetActive(false);
+    }
+
     void GeneratePlayer()
     {
         player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
         player.transform.position = new Vector3(0, 1, 0);
         player.name = "Player";
+    }
+
+    public class InstakillHazard
+    {
+        private GameObject _mesh;
+        private Vector3 _position;
+        private Vector3 _size;
+
+        public InstakillHazard(Vector3 position, Vector3 size)
+        {
+            _position = position;
+            _size = size;
+
+            _mesh = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _mesh.name = "Instakill";
+            _mesh.transform.position = _position;
+            _mesh.transform.localScale = _size;
+            _mesh.GetComponent<Renderer>().material.color = Color.black;
+        }
+
+        public bool CheckCollision(Vector3 targetPos, Vector3 targetSize)
+        {
+            return Mathf.Abs(targetPos.x - _position.x) < (targetSize.x + _size.x) * 0.5f &&
+                   Mathf.Abs(targetPos.y - _position.y) < (targetSize.y + _size.y) * 0.5f &&
+                   Mathf.Abs(targetPos.z - _position.z) < (targetSize.z + _size.z) * 0.5f;
+        }
     }
 
     void HandlePlayerMovement()
@@ -232,7 +295,7 @@ public class EnhancedMeshGenerator : MonoBehaviour
         }
     }
 
-    void GenerateEnemies()
+        void GenerateEnemies()
     {
         for (int i = 0; i < 3; i++)
         {
@@ -249,7 +312,7 @@ public class EnhancedMeshGenerator : MonoBehaviour
         {
             GameObject obs = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             obs.transform.position = new Vector3(10 + i * 10, 1, 0);
-            obs.GetComponent<Renderer>().material.color = Color.black;
+            obs.GetComponent<Renderer>().material.color = Color.cyan;
             obstacles.Add(obs);
         }
     }

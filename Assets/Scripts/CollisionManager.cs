@@ -53,6 +53,14 @@ public class CollisionManager : MonoBehaviour
         }
     }
 
+    public static bool CheckAABBCollision(Vector3 posA, Vector3 sizeA, Vector3 posB, Vector3 sizeB)
+    {
+        return (Mathf.Abs(posA.x - posB.x) < (sizeA.x + sizeB.x) * 0.5f) &&
+               (Mathf.Abs(posA.y - posB.y) < (sizeA.y + sizeB.y) * 0.5f) &&
+               (Mathf.Abs(posA.z - posB.z) < (sizeA.z + sizeB.z) * 0.5f);
+    }
+
+
     private Dictionary<int, AABBBounds> _colliders = new Dictionary<int, AABBBounds>();
     private int nextID = 0;
 
